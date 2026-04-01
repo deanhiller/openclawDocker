@@ -1,0 +1,31 @@
+services:
+  openclaw-gateway:
+    build: .
+    image: openclaw-local:latest
+    container_name: openclaw-gateway
+    restart: unless-stopped
+
+    ports:
+      # Host 18789 → container 18790 (socat proxy) → openclaw at 127.0.0.1:18789
+      # openclaw stays on loopback (no pairing required), socat bridges Docker's port mapping
+      - "127.0.0.1:18789:18790"
+
+    volumes:
+      # Mount ~/.openclaw at its standard container location
+      - "${HOME}/.openclaw:/home/node/.openclaw"
+      # ALSO mount ~/.openclaw at the same absolute Mac path so all hardcoded paths
+      # in openclaw.json (workspace, agents, etc.) resolve correctly inside the container
+      - "${HOME}/.openclaw:/Users/deanhiller/.openclaw"
+      # Repo workspace — set by scripts/start.sh (defaults to all of openclaw dir)
+      - "${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}:/workspace"
+
+    # Allows container to reach host Chrome via host.docker.internal:9222
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Tighten capabilities — openclaw doesn't need raw network access
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true

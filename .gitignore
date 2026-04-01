@@ -1,0 +1,4 @@
+# No secrets live in this repo — they're in ~/.openclaw on your Mac.
+# Only ignoring OS noise and temporary files.
+.DS_Store
+*.log
