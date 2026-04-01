@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OPENCLAW_ROOT="/Users/deanhiller/openclaw"
+OPENCLAW_ROOT="${OPENCLAW_ROOT:-$HOME/openclaw}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
