@@ -10,14 +10,20 @@ RUN apt-get update && apt-get install -y \
     socat \
     && rm -rf /var/lib/apt/lists/*
 
-# Install openclaw globally as root, then switch to node user
+# Install openclaw globally
 RUN npm install -g openclaw
+
+# Set the node user's home to match the Mac user's home directory so that
+# ~/.openclaw inside the container = $HOME/.openclaw on the Mac — identical paths,
+# single volume mount, no path translation issues.
+ARG MAC_HOME
+RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass via docker-compose or --build-arg MAC_HOME=\$HOME)"; exit 1; } && \
+    usermod -d ${MAC_HOME} node && \
+    mkdir -p ${MAC_HOME} && \
+    chown node:node ${MAC_HOME}
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-# The node user (uid 1000) is already created by the node base image.
-# ~/.openclaw will be bind-mounted from the host so all config/tokens are pre-loaded.
 
 USER node
 WORKDIR /workspace
