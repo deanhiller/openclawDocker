@@ -8,37 +8,55 @@ REPO_DIR="$(dirname "$SCRIPT_DIR")"
 echo "=== OpenClaw Gateway Start ==="
 echo ""
 
-# Build options list: root dir first, then each subdirectory
-options=("$OPENCLAW_ROOT (all repos)")
-subdirs=()
-while IFS= read -r -d '' dir; do
-    name="$(basename "$dir")"
-    options+=("$OPENCLAW_ROOT/$name")
-    subdirs+=("$name")
-done < <(find "$OPENCLAW_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+# Build flat paths array and display menu with visual grouping
+options_paths=()
+options_paths+=("$OPENCLAW_ROOT")
 
 echo "Choose workspace scope to mount into openclaw:"
 echo ""
-for i in "${!options[@]}"; do
-    echo "  $((i+1)). ${options[$i]}"
-done
+echo "  1. $OPENCLAW_ROOT (all repos)"
+
+idx=2
+while IFS= read -r -d '' group_dir; do
+    group_name="$(basename "$group_dir")"
+
+    # Collect subdirectories of this group
+    group_subdirs=()
+    while IFS= read -r -d '' project_dir; do
+        group_subdirs+=("$project_dir")
+    done < <(find "$group_dir" -maxdepth 1 -mindepth 1 -type d -print0 2>/dev/null | sort -z)
+
+    if [ "${#group_subdirs[@]}" -gt 0 ]; then
+        echo ""
+        echo "  ${group_name}/"
+        options_paths+=("$group_dir")
+        echo "  $idx.   $group_dir (all ${group_name} repos)"
+        idx=$((idx + 1))
+        for project_dir in "${group_subdirs[@]}"; do
+            options_paths+=("$project_dir")
+            echo "  $idx.   $project_dir"
+            idx=$((idx + 1))
+        done
+    else
+        # Leaf-level group (no sub-projects) — treat as a single entry
+        echo ""
+        options_paths+=("$group_dir")
+        echo "  $idx. $group_dir"
+        idx=$((idx + 1))
+    fi
+done < <(find "$OPENCLAW_ROOT" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+
 echo ""
 
 read -rp "Enter number [1]: " choice
 choice="${choice:-1}"
 
-if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#options[@]}" ]; then
+if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#options_paths[@]}" ]; then
     echo "Invalid choice. Exiting."
     exit 1
 fi
 
-# Strip the label suffix from option 1 (all repos)
-if [ "$choice" -eq 1 ]; then
-    selected_workspace="$OPENCLAW_ROOT"
-else
-    idx=$((choice - 1))
-    selected_workspace="${options[$idx]}"
-fi
+selected_workspace="${options_paths[$((choice - 1))]}"
 
 echo ""
 echo "Workspace: $selected_workspace"
