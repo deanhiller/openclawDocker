@@ -6,5 +6,5 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 echo "Restarting OpenClaw gateway..."
 # Use 'up -d' instead of 'restart' so new volume mounts and config changes take effect
-docker compose up -d
+docker compose restart openclaw-gateway
 echo "Done. Web UI: http://localhost:18789"
