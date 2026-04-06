@@ -10,8 +10,10 @@ RUN apt-get update && apt-get install -y \
     socat \
     && rm -rf /var/lib/apt/lists/*
 
-# Install openclaw globally
-RUN npm install -g openclaw
+# Copy version file and install OpenClaw
+COPY VERSION /tmp/VERSION
+RUN OPENCLAW_VERSION=$(cat /tmp/VERSION) && \
+    npm install -g openclaw@${OPENCLAW_VERSION}
 
 # Set the node user's home to match the Mac user's home directory so that
 # ~/.openclaw inside the container = $HOME/.openclaw on the Mac — identical paths,

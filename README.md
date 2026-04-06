@@ -25,6 +25,8 @@ scripts/stop.sh           # Stop gateway
 scripts/restart.sh        # Restart gateway
 scripts/shell.sh          # Open bash shell inside the container
 scripts/logs.sh           # Tail container logs
+scripts/check-latest.sh   # Check for OpenClaw updates
+scripts/upgrade.sh        # Upgrade OpenClaw to specified version
 
 scripts/start-chrome.sh   # Launch dedicated Chrome with CDP for browser automation
 ```
@@ -37,6 +39,32 @@ scripts/start-chrome.sh   # Launch dedicated Chrome with CDP for browser automat
 4. Configure `~/.openclaw/openclaw.json` for browser CDP (see `docs/openclaw-config-notes.md`)
 5. Run `scripts/start.sh` — pick your workspace scope
 6. Open http://localhost:18789
+
+## Upgrading OpenClaw
+
+To upgrade OpenClaw to a new version:
+
+1. Check for updates:
+   ```bash
+   ./scripts/check-latest.sh
+   ```
+
+2. Upgrade to latest version:
+   ```bash
+   LATEST=$(npm view openclaw version)
+   ./scripts/upgrade.sh "$LATEST"
+   ```
+
+3. Or upgrade to a specific version:
+   ```bash
+   ./scripts/upgrade.sh 2026.4.5
+   ```
+
+The upgrade script will:
+- Stop the gateway
+- Update the VERSION file
+- Upgrade your local OpenClaw CLI
+- Rebuild and restart the gateway with the new version
 
 ## Security
 
