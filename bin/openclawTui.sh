@@ -43,7 +43,7 @@ ensure_agent() {
 
     # Check if agent exists
     if openclaw agents list 2>/dev/null | grep -q "^- $agent_name"; then
-        echo "✓ Using existing agent: $agent_name"
+        echo "✓ Using existing agent: $agent_name" >&2
 
         # Verify workspace matches
         local agent_info
@@ -51,18 +51,20 @@ ensure_agent() {
         if echo "$agent_info" | grep -q "Workspace:"; then
             local current_ws
             current_ws=$(echo "$agent_info" | grep "Workspace:" | sed 's/.*Workspace: //')
+            # Expand tilde to home directory for consistent comparison
+            current_ws="${current_ws/#\~/$HOME}"
             if [ "$current_ws" != "$path" ]; then
-                echo "⚠ Workspace mismatch: agent uses '$current_ws'"
-                echo "   Updating agent workspace..."
+                echo "⚠ Workspace mismatch: agent uses '$current_ws'" >&2
+                echo "   Updating agent workspace..." >&2
                 openclaw agents add "$agent_name" --workspace "$path" --non-interactive 2>/dev/null || true
             fi
         fi
     else
-        echo "Creating agent: $agent_name for $path"
+        echo "Creating agent: $agent_name for $path" >&2
         if openclaw agents add "$agent_name" --workspace "$path" --non-interactive 2>/dev/null; then
-            echo "✓ Agent created"
+            echo "✓ Agent created" >&2
         else
-            echo "⚠ Could not create agent, using default"
+            echo "⚠ Could not create agent, using default" >&2
             agent_name="main"
         fi
     fi
