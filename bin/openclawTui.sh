@@ -72,6 +72,69 @@ ensure_agent() {
     echo "$agent_name"
 }
 
+# Select or create a session for an agent
+select_session() {
+    local agent_name="$1"
+
+    echo "Select session for agent '$agent_name':" >&2
+    echo "" >&2
+    echo "  1. main (default)" >&2
+    echo "  2. Create new session" >&2
+    echo "  3. Resume existing session" >&2
+    echo "" >&2
+    read -rp "Enter number [1]: " choice
+    choice="${choice:-1}"
+
+    if [ "$choice" -eq 1 ]; then
+        echo "main"
+    elif [ "$choice" -eq 2 ]; then
+        read -rp "Session name: " new_name
+        echo "$new_name"
+    elif [ "$choice" -eq 3 ]; then
+        # Only fetch sessions when the user actually wants to browse them
+        echo "Fetching sessions..." >&2
+        local existing_sessions=()
+        local json_output
+        if json_output=$(openclaw sessions --agent "$agent_name" --json 2>/dev/null); then
+            while IFS= read -r scope; do
+                if [ -n "$scope" ]; then
+                    existing_sessions+=("$scope")
+                fi
+            done < <(echo "$json_output" \
+                | jq -r ".sessions[]? | select(.agentId==\"$agent_name\") | .key" 2>/dev/null \
+                | sed "s/^agent:${agent_name}://" \
+                | sort -u)
+        fi
+
+        if [ "${#existing_sessions[@]}" -eq 0 ]; then
+            echo "No existing sessions found. Using main." >&2
+            echo "main"
+            return
+        fi
+
+        echo "" >&2
+        local idx=1
+        for s in "${existing_sessions[@]}"; do
+            echo "  $idx. $s" >&2
+            idx=$((idx + 1))
+        done
+        echo "" >&2
+        read -rp "Enter number [1]: " sess_choice
+        sess_choice="${sess_choice:-1}"
+
+        local arr_idx=$((sess_choice - 1))
+        if [ "$arr_idx" -ge 0 ] && [ "$arr_idx" -lt "${#existing_sessions[@]}" ]; then
+            echo "${existing_sessions[$arr_idx]}"
+        else
+            echo "Invalid choice, using main" >&2
+            echo "main"
+        fi
+    else
+        echo "Invalid choice, using main" >&2
+        echo "main"
+    fi
+}
+
 # Confirm root agent usage
 confirm_root_agent() {
     local root_path="$1"
@@ -150,13 +213,16 @@ main() {
         # Ensure agent exists
         agent_name=$(ensure_agent "$workspace_path" "$agent_name")
 
-        # Start TUI
+        # Select session and start TUI
+        local session
+        session=$(select_session "$agent_name")
+
         echo ""
         echo "Starting OpenClaw TUI with ROOT agent: $agent_name"
-        echo "Session: agent:main:$agent_name"
+        echo "Session: agent:$agent_name:$session"
         echo ""
-        
-        openclaw tui --session "agent:main:$agent_name"
+
+        (cd "$workspace_path" && openclaw tui --session "agent:$agent_name:$session")
         return
     fi
     
@@ -177,13 +243,16 @@ main() {
     # Ensure agent exists
     agent_name=$(ensure_agent "$workspace_path" "$agent_name")
 
-    # Start TUI
+    # Select session and start TUI
+    local session
+    session=$(select_session "$agent_name")
+
     echo ""
     echo "Starting OpenClaw TUI with agent: $agent_name"
-    echo "Session: agent:main:$agent_name"
+    echo "Session: agent:$agent_name:$session"
     echo ""
-    
-    openclaw tui --session "agent:main:$agent_name"
+
+    (cd "$workspace_path" && openclaw tui --session "agent:$agent_name:$session")
 }
 
 # If a path is provided as argument, use it directly
@@ -228,11 +297,16 @@ if [ $# -gt 0 ]; then
         agent_name=$(create_agent_name "$target_path")
         agent_name=$(ensure_agent "$workspace_path" "$agent_name")
 
+        # Select session and start TUI
+        local session
+        session=$(select_session "$agent_name")
+
         echo ""
         echo "Starting TUI with agent: $agent_name"
+        echo "Session: agent:$agent_name:$session"
         echo ""
-        
-        openclaw tui --session "agent:main:$agent_name"
+
+        (cd "$workspace_path" && openclaw tui --session "agent:$agent_name:$session")
     else
         echo "Error: Directory does not exist: $1"
         exit 1
