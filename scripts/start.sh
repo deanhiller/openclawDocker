@@ -65,7 +65,7 @@ echo ""
 export OPENCLAW_WORKSPACE="$selected_workspace"
 
 cd "$REPO_DIR"
-docker compose up -d --build
+docker compose up -d
 
 echo ""
 echo "OpenClaw gateway is running."

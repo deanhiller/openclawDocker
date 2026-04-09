@@ -16,8 +16,8 @@ services:
       # Single mount — container home is /Users/deanhiller so this path matches Mac exactly.
       # All hardcoded paths in openclaw.json, exec-approvals.json, etc. resolve identically.
       - "${HOME}/.openclaw:/Users/deanhiller/.openclaw"
-      # Repo workspace — set by scripts/start.sh
-      - "${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}:/workspace"
+      # Repo workspace — mounted at the same path as on Mac so file references match exactly
+      - "${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}:${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}"
 
     # Allows container to reach host Chrome via host.docker.internal:9222
     extra_hosts:

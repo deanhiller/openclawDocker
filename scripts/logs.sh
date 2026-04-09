@@ -6,8 +6,8 @@ cd "$(dirname "$SCRIPT_DIR")"
 
 JQ_FILTER='
   .time + " [" +
-  (.["_meta"].name | try (fromjson | .subsystem | split("/") | last) catch .) + "] " +
-  (.["1"] | if type == "string" then . else tojson end)
+  (.["_meta"].name as $name | try ($name | fromjson | .subsystem | split("/") | last) catch $name) + "] " +
+  ((.["0"] // .["1"]) | if type == "string" then . else tojson end)
 '
 
 # Find the log file from inside the container (uses container UTC date)
@@ -18,7 +18,7 @@ if [[ -z "$LOG_FILE" ]]; then
 fi
 
 if [[ "${1:-}" == "--less" ]]; then
-  docker exec openclaw-gateway cat "$LOG_FILE" | jq -r "$JQ_FILTER" | less
+  docker exec openclaw-gateway cat "$LOG_FILE" | jq -Rr ". as \$raw | try (fromjson | $JQ_FILTER) catch \$raw" | less
 else
-  docker exec openclaw-gateway tail -f "$LOG_FILE" | jq -r "$JQ_FILTER"
+  docker exec openclaw-gateway tail -f "$LOG_FILE" | jq -Rr ". as \$raw | try (fromjson | $JQ_FILTER) catch \$raw"
 fi

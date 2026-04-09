@@ -50,7 +50,7 @@ they don't offer a public messaging API. OpenClaw polls periodically.
 ## Workspace Scoping
 
 The Docker container mounts one workspace at a time (chosen at startup).
-Inside the container, your repos are at `/workspace/`.
+Inside the container, your repos are mounted at the same path as on your Mac (e.g. `/Users/deanhiller/openclaw/`).
 
 To switch repos: `scripts/stop.sh` → `scripts/start.sh` → pick a different scope.
 

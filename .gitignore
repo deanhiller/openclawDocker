@@ -2,3 +2,4 @@
 # Only ignoring OS noise and temporary files.
 .DS_Store
 *.log
+VERSION.previous
