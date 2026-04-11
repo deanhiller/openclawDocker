@@ -13,11 +13,18 @@ services:
       - "127.0.0.1:18789:18790"
 
     volumes:
-      # Single mount — container home is /Users/deanhiller so this path matches Mac exactly.
-      # All hardcoded paths in openclaw.json, exec-approvals.json, etc. resolve identically.
-      - "${HOME}/.openclaw:/Users/deanhiller/.openclaw"
+      # Container home is ${HOME} (matched via MAC_HOME build arg above), so
+      # every host path resolves to the identical path inside the container.
+      # Hardcoded paths in openclaw.json, exec-approvals.json, etc. just work.
+      - "${HOME}/.openclaw:${HOME}/.openclaw"
+      # Claude Code config + credentials — isolated from the host's ~/.claude so
+      # container Claude does not corrupt host Claude state (different Keychain
+      # vs file-based creds, different versions, concurrent writes). First run
+      # inside the container requires a one-time `claude` login.
+      - "${HOME}/.claudeDocker:${HOME}/.claude"
+      - "${HOME}/.claudeDocker.json:${HOME}/.claude.json"
       # Repo workspace — mounted at the same path as on Mac so file references match exactly
-      - "${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}:${OPENCLAW_WORKSPACE:-/Users/deanhiller/openclaw}"
+      - "${OPENCLAW_WORKSPACE:-${HOME}/openclaw}:${OPENCLAW_WORKSPACE:-${HOME}/openclaw}"
 
     # Allows container to reach host Chrome via host.docker.internal:9222
     extra_hosts:

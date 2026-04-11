@@ -15,7 +15,7 @@ echo "=== Project Directory Mapping ==="
 echo ""
 
 # List project directories and their corresponding agent names
-WORKSPACE_ROOT="/Users/deanhiller/openclaw"
+WORKSPACE_ROOT="$HOME/openclaw"
 
 echo "Project directories under $WORKSPACE_ROOT:"
 echo ""

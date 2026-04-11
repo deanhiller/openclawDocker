@@ -15,7 +15,7 @@ Dockerized [OpenClaw](https://openclaw.ai) gateway for secure, isolated AI assis
 - Docker Desktop installed and running
 - OpenClaw installed on your Mac (`npm install -g openclaw` or via [openclaw.ai](https://openclaw.ai))
 - `~/.openclaw/` configured on your Mac (run `openclaw onboard` if not done yet)
-- Repos cloned into `/Users/deanhiller/openclaw/`
+- Repos cloned into `$HOME/openclaw/`
 
 ## Commands
 

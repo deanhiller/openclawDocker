@@ -6,7 +6,7 @@ set -euo pipefail
 # Warns when using root agent
 
 # Configuration
-WORKSPACE_ROOT="/Users/deanhiller/openclaw"
+WORKSPACE_ROOT="$HOME/openclaw"
 
 # Check if current directory is within the workspace
 is_in_workspace() {

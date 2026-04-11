@@ -4,7 +4,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$(dirname "$SCRIPT_DIR")"
 
+# Always mount the full workspace root — per-project agent scoping is handled
+# inside the container by bin/openclawTui.sh, so no prompt needed here.
+OPENCLAW_WORKSPACE="${OPENCLAW_WORKSPACE:-$HOME/openclaw}"
+export OPENCLAW_WORKSPACE
+
+# Ensure isolated Claude Code state exists on host before mounting.
+mkdir -p "$HOME/.claudeDocker"
+[ -e "$HOME/.claudeDocker.json" ] || echo '{}' > "$HOME/.claudeDocker.json"
+
 echo "Restarting OpenClaw gateway..."
-# Use 'up -d' instead of 'restart' so new volume mounts and config changes take effect
-docker compose restart openclaw-gateway
+# `up -d --force-recreate` picks up new volume mounts and compose changes;
+# plain `docker compose restart` would not.
+docker compose up -d --force-recreate openclaw-gateway
 echo "Done. Web UI: http://localhost:18789"
