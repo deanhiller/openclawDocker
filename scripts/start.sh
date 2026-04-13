@@ -20,6 +20,9 @@ echo ""
 mkdir -p "$HOME/.claudeDocker"
 [ -e "$HOME/.claudeDocker.json" ] || echo '{}' > "$HOME/.claudeDocker.json"
 
+# Ensure native Claude Code installer dirs exist on host for volume mounts.
+mkdir -p "$HOME/.claudeDocker-local/bin" "$HOME/.claudeDocker-local/share/claude"
+
 cd "$REPO_DIR"
 docker compose up -d
 

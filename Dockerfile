@@ -30,6 +30,7 @@ RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass
 RUN mkdir -p ${MAC_HOME}/.local/bin ${MAC_HOME}/.local/share/claude/versions && \
     chown -R node:node ${MAC_HOME}/.local && \
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
+    echo 'export PS1="Docker:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
