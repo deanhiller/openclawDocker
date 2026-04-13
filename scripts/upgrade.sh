@@ -4,7 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "=== OpenClaw Upgrade ==="
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_DIR" | tr '[:upper:]' '[:lower:]')}"
+IMAGE_NAME="openclaw-${COMPOSE_PROJECT_NAME}"
+
+echo "=== OpenClaw Upgrade (${COMPOSE_PROJECT_NAME}) ==="
 echo ""
 
 # Check if version argument is provided
@@ -29,9 +32,9 @@ echo ""
 
 # Step 1: Tag current image so we can revert
 echo "1. Tagging current image for rollback..."
-if docker image inspect openclaw-local:latest >/dev/null 2>&1; then
-    docker tag openclaw-local:latest "openclaw-local:previous"
-    echo "   Tagged openclaw-local:latest as openclaw-local:previous"
+if docker image inspect ${IMAGE_NAME}:latest >/dev/null 2>&1; then
+    docker tag ${IMAGE_NAME}:latest "${IMAGE_NAME}:previous"
+    echo "   Tagged ${IMAGE_NAME}:latest as ${IMAGE_NAME}:previous"
 else
     echo "   No existing image to tag (first build)"
 fi

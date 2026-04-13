@@ -4,7 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "=== OpenClaw Gateway Start ==="
+# Derive project name from the directory so multiple clones use separate images/containers.
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_DIR" | tr '[:upper:]' '[:lower:]')}"
+
+echo "=== OpenClaw Gateway Start (${COMPOSE_PROJECT_NAME}) ==="
 echo ""
 
 # Always mount the full workspace root — per-project agent scoping is handled

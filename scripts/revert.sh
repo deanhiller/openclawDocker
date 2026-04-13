@@ -4,7 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "=== OpenClaw Revert ==="
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_DIR" | tr '[:upper:]' '[:lower:]')}"
+IMAGE_NAME="openclaw-${COMPOSE_PROJECT_NAME}"
+
+echo "=== OpenClaw Revert (${COMPOSE_PROJECT_NAME}) ==="
 echo ""
 
 # Check we have something to revert to
@@ -25,10 +28,10 @@ echo "1. Stopping OpenClaw gateway..."
 "$SCRIPT_DIR/stop.sh"
 
 # Step 2: Restore previous Docker image if tagged
-if docker image inspect openclaw-local:previous >/dev/null 2>&1; then
+if docker image inspect ${IMAGE_NAME}:previous >/dev/null 2>&1; then
     echo "2. Restoring previous Docker image..."
-    docker tag openclaw-local:previous openclaw-local:latest
-    echo "   Restored openclaw-local:previous as openclaw-local:latest"
+    docker tag ${IMAGE_NAME}:previous ${IMAGE_NAME}:latest
+    echo "   Restored ${IMAGE_NAME}:previous as ${IMAGE_NAME}:latest"
 else
     echo "2. No previous image tag found — rebuilding from previous version..."
     echo "$PREVIOUS_VERSION" > "$REPO_DIR/VERSION"

@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y \
     socat \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy version file and install OpenClaw
+# Copy version files and install OpenClaw at build time (runs as root → /usr/local/bin)
 COPY VERSION /tmp/VERSION
+COPY CLAUDE_VERSION /tmp/CLAUDE_VERSION
 RUN OPENCLAW_VERSION=$(cat /tmp/VERSION) && \
     npm install -g openclaw@${OPENCLAW_VERSION}
 
@@ -24,18 +25,24 @@ RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass
     mkdir -p ${MAC_HOME} && \
     chown node:node ${MAC_HOME}
 
-# Claude Code native installer lives in ~/.local/{bin,share/claude}.
-# These dirs are volume-mounted from the Mac so installs survive restarts.
-# Add ~/.local/bin to PATH and set up the alias.
-RUN mkdir -p ${MAC_HOME}/.local/bin ${MAC_HOME}/.local/share/claude/versions && \
-    chown -R node:node ${MAC_HOME}/.local && \
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
+# Shell config: prompt and claude alias
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
     echo 'export PS1="Docker:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Install Claude Code native binary to a staging dir inside the image.
+# The real ~/.local is volume-mounted at runtime (so updates persist), so we
+# stage here and let the entrypoint seed the mount on first run.
+RUN mkdir -p /opt/claude-stage/.local
+ENV HOME_BACKUP=${MAC_HOME}
+ENV HOME=/opt/claude-stage
+RUN CLAUDE_VERSION=$(cat /tmp/CLAUDE_VERSION | tr -d '[:space:]') && \
+    npx "@anthropic-ai/claude-code@${CLAUDE_VERSION}" install
+ENV HOME=${HOME_BACKUP}
 
 USER node
 WORKDIR ${MAC_HOME}

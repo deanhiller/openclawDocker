@@ -3,16 +3,20 @@
 # socat listens on 0.0.0.0:18790 so Docker can forward the port, then proxies to openclaw.
 set -euo pipefail
 
-# Install Claude Code native binary on first run (when the mount is empty).
-# Subsequent runs reuse the persisted binary; auto-updates write to the same mount.
+# Seed the mounted ~/.local from the staged build-time install (first run only).
+# After this, claude auto-updates write directly to the mount and persist.
 if [ ! -x "$HOME/.local/bin/claude" ]; then
-  echo "Claude Code not found in mounted volume — installing native binary..."
-  # Bootstrap: use the npm version (if present) or download directly
-  npx @anthropic-ai/claude-code install 2>/dev/null \
-    || curl -fsSL https://cli.claude.ai/install.sh | sh
-  echo "Claude Code installed: $($HOME/.local/bin/claude --version)"
+  echo "Seeding Claude Code from image into mounted volume..."
+  cp -a /opt/claude-stage/.local/. "$HOME/.local/"
+  echo "Claude Code ready: $($HOME/.local/bin/claude --version)"
 fi
 
 socat TCP-LISTEN:18790,fork,reuseaddr TCP:127.0.0.1:18789 &
 
-exec openclaw gateway
+# Run openclaw gateway but keep the container alive if it crashes, so you can
+# still shell in and use claude. Retry every 10 seconds.
+while true; do
+  echo "Starting openclaw gateway..."
+  openclaw gateway || echo "openclaw gateway exited with code $? — retrying in 10s..."
+  sleep 10
+done

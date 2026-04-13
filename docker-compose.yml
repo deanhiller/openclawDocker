@@ -4,8 +4,8 @@ services:
       context: .
       args:
         MAC_HOME: ${HOME}
-    image: openclaw-local:latest
-    container_name: openclaw-gateway
+    image: openclaw-${COMPOSE_PROJECT_NAME:-local}:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-openclaw}-gateway
     restart: unless-stopped
 
     ports:
@@ -23,8 +23,8 @@ services:
       # inside the container requires a one-time `claude` login.
       - "${HOME}/.claudeDocker:${HOME}/.claude"
       - "${HOME}/.claudeDocker.json:${HOME}/.claude.json"
-      # Claude Code native installer — persisted on Mac so auto-updates survive
-      # container restarts. Isolated from Mac's own ~/.local (different arch/binary).
+      # Claude Code native binary + auto-updates — persisted on Mac so updates
+      # survive container restarts. Seeded from the image on first run.
       - "${HOME}/.claudeDocker-local/bin:${HOME}/.local/bin"
       - "${HOME}/.claudeDocker-local/share/claude:${HOME}/.local/share/claude"
       # Repo workspace — mounted at the same path as on Mac so file references match exactly

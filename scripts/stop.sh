@@ -2,8 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$(dirname "$SCRIPT_DIR")"
+REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Stopping OpenClaw gateway..."
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_DIR" | tr '[:upper:]' '[:lower:]')}"
+
+cd "$REPO_DIR"
+
+echo "Stopping OpenClaw gateway (${COMPOSE_PROJECT_NAME})..."
 docker compose down
 echo "Done."

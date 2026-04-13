@@ -2,9 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$(dirname "$SCRIPT_DIR")"
+REPO_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "Entering shell inside openclaw-gateway container..."
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-$(basename "$REPO_DIR" | tr '[:upper:]' '[:lower:]')}"
+
+cd "$REPO_DIR"
+
+echo "Entering shell inside ${COMPOSE_PROJECT_NAME}-gateway container..."
 echo "(Type 'exit' to leave)"
 echo ""
 docker compose exec openclaw-gateway /bin/bash
