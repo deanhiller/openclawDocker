@@ -30,6 +30,10 @@ RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
+# Embed git hash so the image can be queried for its source commit
+ARG GIT_HASH=unknown
+RUN echo "${GIT_HASH}" > /etc/git-hash
+
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

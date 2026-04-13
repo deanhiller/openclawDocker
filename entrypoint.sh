@@ -11,6 +11,13 @@ if [ ! -x "$HOME/.local/bin/claude" ]; then
   echo "Claude Code ready: $($HOME/.local/bin/claude --version)"
 fi
 
+# Report the git hash this image was built from; warn if it's a dev build
+GIT_HASH=$(cat /etc/git-hash 2>/dev/null || echo "unknown")
+echo "Image built from git hash: $GIT_HASH"
+if [[ "$GIT_HASH" == *-dev ]]; then
+  echo "WARNING: this is dev only, please commit changes and rebuild the real image"
+fi
+
 socat TCP-LISTEN:18790,fork,reuseaddr TCP:127.0.0.1:18789 &
 
 # Run openclaw gateway but keep the container alive if it crashes, so you can
