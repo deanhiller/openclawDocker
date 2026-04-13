@@ -15,9 +15,6 @@ COPY VERSION /tmp/VERSION
 RUN OPENCLAW_VERSION=$(cat /tmp/VERSION) && \
     npm install -g openclaw@${OPENCLAW_VERSION}
 
-# Install Claude Code so users can `claude` inside the container
-RUN npm install -g @anthropic-ai/claude-code
-
 # Set the node user's home to match the Mac user's home directory so that
 # ~/.openclaw inside the container = $HOME/.openclaw on the Mac — identical paths,
 # single volume mount, no path translation issues.
@@ -27,8 +24,13 @@ RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass
     mkdir -p ${MAC_HOME} && \
     chown node:node ${MAC_HOME}
 
-# Default `claude` to skip all permission prompts — the container itself is the sandbox.
-RUN echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
+# Claude Code native installer lives in ~/.local/{bin,share/claude}.
+# These dirs are volume-mounted from the Mac so installs survive restarts.
+# Add ~/.local/bin to PATH and set up the alias.
+RUN mkdir -p ${MAC_HOME}/.local/bin ${MAC_HOME}/.local/share/claude/versions && \
+    chown -R node:node ${MAC_HOME}/.local && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
+    echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
 COPY entrypoint.sh /entrypoint.sh

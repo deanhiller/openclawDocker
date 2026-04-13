@@ -23,6 +23,10 @@ services:
       # inside the container requires a one-time `claude` login.
       - "${HOME}/.claudeDocker:${HOME}/.claude"
       - "${HOME}/.claudeDocker.json:${HOME}/.claude.json"
+      # Claude Code native installer — persisted on Mac so auto-updates survive
+      # container restarts. Isolated from Mac's own ~/.local (different arch/binary).
+      - "${HOME}/.claudeDocker-local/bin:${HOME}/.local/bin"
+      - "${HOME}/.claudeDocker-local/share/claude:${HOME}/.local/share/claude"
       # Repo workspace — mounted at the same path as on Mac so file references match exactly
       - "${OPENCLAW_WORKSPACE:-${HOME}/openclaw}:${OPENCLAW_WORKSPACE:-${HOME}/openclaw}"
 
