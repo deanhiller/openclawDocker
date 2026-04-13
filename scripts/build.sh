@@ -11,6 +11,6 @@ VERSION=$(cat "$REPO_DIR/VERSION")
 echo "Building openclaw-${COMPOSE_PROJECT_NAME} image (version $VERSION)..."
 
 cd "$REPO_DIR"
-docker compose build --no-cache
+docker compose build
 
 echo "Done. Image openclaw-${COMPOSE_PROJECT_NAME}:latest built with openclaw@$VERSION"

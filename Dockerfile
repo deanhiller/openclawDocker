@@ -12,7 +12,6 @@ RUN apt-get update && apt-get install -y \
 
 # Copy version files and install OpenClaw at build time (runs as root → /usr/local/bin)
 COPY VERSION /tmp/VERSION
-COPY CLAUDE_VERSION /tmp/CLAUDE_VERSION
 RUN OPENCLAW_VERSION=$(cat /tmp/VERSION) && \
     npm install -g openclaw@${OPENCLAW_VERSION}
 
@@ -40,6 +39,7 @@ RUN chmod +x /entrypoint.sh
 RUN mkdir -p /opt/claude-stage/.local
 ENV HOME_BACKUP=${MAC_HOME}
 ENV HOME=/opt/claude-stage
+COPY CLAUDE_VERSION /tmp/CLAUDE_VERSION
 RUN CLAUDE_VERSION=$(cat /tmp/CLAUDE_VERSION | tr -d '[:space:]') && \
     npx "@anthropic-ai/claude-code@${CLAUDE_VERSION}" install
 ENV HOME=${HOME_BACKUP}
