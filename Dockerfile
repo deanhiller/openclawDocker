@@ -9,6 +9,21 @@ RUN apt-get update && apt-get install -y \
     python3 \
     ca-certificates \
     socat \
+    libnspr4 \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libdbus-1-3 \
+    libcups2 \
+    libxkbcommon0 \
+    libasound2 \
+    libgbm1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libatspi2.0-0 \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # MAC_HOME is declared early — the claude install below references it via
