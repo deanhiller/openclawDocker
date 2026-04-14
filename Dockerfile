@@ -28,6 +28,7 @@ RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
     echo 'export PS1="Docker:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
+    echo 'export HOST_IP="$(getent hosts host.docker.internal 2>/dev/null | awk '"'"'{print $1}'"'"')"' >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
 # Embed git hash so the image can be queried for its source commit
