@@ -15,7 +15,7 @@ fi
 # Host headers that aren't IPs or "localhost" (DNS rebinding protection), so we
 # can't use the hostname directly in the Playwright MCP endpoint. The IP can
 # change across Docker Desktop restarts, so re-resolve every time.
-HOST_IP="$(getent hosts host.docker.internal 2>/dev/null | awk '{print $1}')"
+HOST_IP="$(getent ahostsv4 host.docker.internal 2>/dev/null | awk '/STREAM/ {print $1; exit}')"
 if [ -z "$HOST_IP" ]; then
   echo "WARNING: could not resolve host.docker.internal — Playwright MCP will not work"
   HOST_IP="host.docker.internal"  # fall back, user may manually fix

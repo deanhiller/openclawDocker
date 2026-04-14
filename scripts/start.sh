@@ -18,16 +18,14 @@ export OPENCLAW_WORKSPACE
 echo "Workspace: $OPENCLAW_WORKSPACE"
 echo ""
 
-# Ensure isolated Claude Code state exists on host before mounting — otherwise
-# Docker would auto-create ~/.claudeDocker.json as a directory.
-mkdir -p "$HOME/.claudeDocker"
-[ -e "$HOME/.claudeDocker.json" ] || echo '{}' > "$HOME/.claudeDocker.json"
-
-# Ensure mounted persistent-state dirs exist on host before Docker tries to mount them.
-# (Docker auto-creates missing mount sources as root-owned, which breaks things.)
-mkdir -p "$HOME/.claudeDocker/.local/bin" \
+# Ensure all host-side mount sources exist before Docker tries to mount them.
+# Docker auto-creates missing mount sources as root-owned, which breaks things.
+# ~/.claudeDocker mirrors the container's $HOME — see ~/.claudeDocker/README.md.
+mkdir -p "$HOME/.claudeDocker/.claude" \
+         "$HOME/.claudeDocker/.local/bin" \
          "$HOME/.claudeDocker/.local/share/claude" \
          "$HOME/.claudeDocker/.claude-mem"
+[ -e "$HOME/.claudeDocker/.claude.json" ] || echo '{}' > "$HOME/.claudeDocker/.claude.json"
 
 cd "$REPO_DIR"
 docker compose up -d

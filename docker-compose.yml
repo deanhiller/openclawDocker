@@ -17,12 +17,12 @@ services:
       # every host path resolves to the identical path inside the container.
       # Hardcoded paths in openclaw.json, exec-approvals.json, etc. just work.
       - "${HOME}/.openclaw:${HOME}/.openclaw"
-      # Claude Code config + credentials — isolated from the host's ~/.claude so
-      # container Claude does not corrupt host Claude state (different Keychain
-      # vs file-based creds, different versions, concurrent writes). First run
-      # inside the container requires a one-time `claude` login.
-      - "${HOME}/.claudeDocker:${HOME}/.claude"
-      - "${HOME}/.claudeDocker.json:${HOME}/.claude.json"
+      # Claude Code persistent state — ~/.claudeDocker on the host mirrors the
+      # container's $HOME layout (.claude/, .claude.json, .claude-mem/, .local/).
+      # Isolated from the host Mac's ~/.claude to avoid credential/version
+      # conflicts. See ~/.claudeDocker/README.md for the layout documentation.
+      - "${HOME}/.claudeDocker/.claude:${HOME}/.claude"
+      - "${HOME}/.claudeDocker/.claude.json:${HOME}/.claude.json"
       # Claude Code native binary + auto-updates — persisted on Mac so updates
       # survive container restarts. Seeded from the image on first run.
       - "${HOME}/.claudeDocker/.local/bin:${HOME}/.local/bin"

@@ -50,7 +50,7 @@ RUN usermod -d ${MAC_HOME} node && \
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
     echo 'export PS1="Docker:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
-    echo 'export HOST_IP="$(getent hosts host.docker.internal 2>/dev/null | awk '"'"'{print $1}'"'"')"' >> ${MAC_HOME}/.bashrc && \
+    echo 'export HOST_IP="$(getent ahostsv4 host.docker.internal 2>/dev/null | awk '"'"'/STREAM/ {print $1; exit}'"'"')"' >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
 # ---------------- High-churn layers (cheap, always last) ----------------
