@@ -23,8 +23,11 @@ echo ""
 mkdir -p "$HOME/.claudeDocker"
 [ -e "$HOME/.claudeDocker.json" ] || echo '{}' > "$HOME/.claudeDocker.json"
 
-# Ensure native Claude Code installer dirs exist on host for volume mounts.
-mkdir -p "$HOME/.claudeDocker-local/bin" "$HOME/.claudeDocker-local/share/claude"
+# Ensure mounted persistent-state dirs exist on host before Docker tries to mount them.
+# (Docker auto-creates missing mount sources as root-owned, which breaks things.)
+mkdir -p "$HOME/.claudeDocker/.local/bin" \
+         "$HOME/.claudeDocker/.local/share/claude" \
+         "$HOME/.claudeDocker/.claude-mem"
 
 cd "$REPO_DIR"
 docker compose up -d

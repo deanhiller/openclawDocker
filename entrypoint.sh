@@ -11,6 +11,42 @@ if [ ! -x "$HOME/.local/bin/claude" ]; then
   echo "Claude Code ready: $($HOME/.local/bin/claude --version)"
 fi
 
+# Resolve host.docker.internal to its IP every start — Chrome's DevTools rejects
+# Host headers that aren't IPs or "localhost" (DNS rebinding protection), so we
+# can't use the hostname directly in the Playwright MCP endpoint. The IP can
+# change across Docker Desktop restarts, so re-resolve every time.
+HOST_IP="$(getent hosts host.docker.internal 2>/dev/null | awk '{print $1}')"
+if [ -z "$HOST_IP" ]; then
+  echo "WARNING: could not resolve host.docker.internal — Playwright MCP will not work"
+  HOST_IP="host.docker.internal"  # fall back, user may manually fix
+fi
+echo "Host IP resolved to: $HOST_IP"
+
+# Write (or refresh) the Playwright MCP entry in ~/.claude.json.
+# Runs every start so the endpoint always matches the current host IP.
+if [ -f "$HOME/.claude.json" ]; then
+  HOST_IP="$HOST_IP" node -e '
+    const fs = require("fs");
+    const path = process.env.HOME + "/.claude.json";
+    const cfg = JSON.parse(fs.readFileSync(path, "utf8"));
+    cfg.mcpServers = cfg.mcpServers || {};
+    const existing = cfg.mcpServers.playwright;
+    const desiredEndpoint = `http://${process.env.HOST_IP}:9222`;
+    const needsUpdate = !existing
+      || existing.env?.PLAYWRIGHT_MCP_CDP_ENDPOINT !== desiredEndpoint;
+    if (needsUpdate) {
+      cfg.mcpServers.playwright = {
+        type: "stdio",
+        command: "npx",
+        args: ["@playwright/mcp@latest"],
+        env: { PLAYWRIGHT_MCP_CDP_ENDPOINT: desiredEndpoint }
+      };
+      fs.writeFileSync(path, JSON.stringify(cfg, null, 2));
+      console.log(`Playwright MCP endpoint set to ${desiredEndpoint}`);
+    }
+  '
+fi
+
 # Report the git hash this image was built from; warn if it's a dev build
 GIT_HASH=$(cat /etc/git-hash 2>/dev/null || echo "unknown")
 echo "Image built from git hash: $GIT_HASH"
