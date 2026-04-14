@@ -31,7 +31,7 @@ if [ -f "$HOME/.claude.json" ]; then
     const cfg = JSON.parse(fs.readFileSync(path, "utf8"));
     cfg.mcpServers = cfg.mcpServers || {};
     const existing = cfg.mcpServers.playwright;
-    const desiredEndpoint = `http://${process.env.HOST_IP}:9222`;
+    const desiredEndpoint = `http://${process.env.HOST_IP}:9223`;
     const needsUpdate = !existing
       || existing.env?.PLAYWRIGHT_MCP_CDP_ENDPOINT !== desiredEndpoint;
     if (needsUpdate) {
