@@ -68,6 +68,19 @@ RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
     echo 'export HOST_IP="$(getent ahostsv4 host.docker.internal 2>/dev/null | awk '"'"'/STREAM/ {print $1; exit}'"'"')"' >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
 
+# ---------------- nx platform-guard ----------------
+# Stage the helper in the image; entrypoint.sh seeds it to the bind-mounted
+# ~/openclaw/bin on container start (so Mac sees it too via the mount).
+# Append the pnpm/npx wrapper block to the dev user's ~/.bashrc.
+COPY ensure-node-modules.sh /opt/nx-guard/ensure-node-modules.sh
+COPY nx-guard-bashrc.sh /opt/nx-guard/nx-guard-bashrc.sh
+RUN chmod +x /opt/nx-guard/ensure-node-modules.sh && \
+    echo "" >> ${MAC_HOME}/.bashrc && \
+    echo "# >>> nx platform-guard (baked by openclawDocker1 image) >>>" >> ${MAC_HOME}/.bashrc && \
+    cat /opt/nx-guard/nx-guard-bashrc.sh >> ${MAC_HOME}/.bashrc && \
+    echo "# <<< nx platform-guard <<<" >> ${MAC_HOME}/.bashrc && \
+    chown node:node ${MAC_HOME}/.bashrc
+
 # ---------------- High-churn layers (cheap, always last) ----------------
 
 # entrypoint.sh — edited frequently during dev
