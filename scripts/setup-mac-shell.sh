@@ -29,11 +29,17 @@ if [ "$(uname -s)" != "Darwin" ]; then
 fi
 
 BIN_DIR="$HOME/openclaw/bin"
-HELPER_SRC="$REPO_DIR/ensure-node-modules.sh"
-HELPER_DST="$BIN_DIR/ensure-node-modules.sh"
 SNIPPET_SRC="$REPO_DIR/nx-guard-bashrc.sh"
 
-for f in "$HELPER_SRC" "$SNIPPET_SRC"; do
+# Files copied into ~/openclaw/bin/ — the helper plus the pnpm/npx shims that
+# every subprocess needs to find on PATH.
+BIN_FILES=(
+    "$REPO_DIR/ensure-node-modules.sh"
+    "$REPO_DIR/shims/pnpm"
+    "$REPO_DIR/shims/npx"
+)
+
+for f in "$SNIPPET_SRC" "${BIN_FILES[@]}"; do
     if [ ! -f "$f" ]; then
         echo "ERROR: $f not found — openclawDocker1 appears incomplete." >&2
         exit 1
@@ -42,12 +48,15 @@ done
 
 mkdir -p "$BIN_DIR"
 
-# Copy / refresh the helper.
-if [ ! -f "$HELPER_DST" ] || ! cmp -s "$HELPER_SRC" "$HELPER_DST"; then
-    cp "$HELPER_SRC" "$HELPER_DST"
-    chmod +x "$HELPER_DST"
-    echo "🔧 Installed $HELPER_DST"
-fi
+# Copy / refresh helper + shims.
+for src in "${BIN_FILES[@]}"; do
+    dst="$BIN_DIR/$(basename "$src")"
+    if [ ! -f "$dst" ] || ! cmp -s "$src" "$dst"; then
+        cp "$src" "$dst"
+        chmod +x "$dst"
+        echo "🔧 Installed $dst"
+    fi
+done
 
 # Pick target rc file (zsh is macOS default since 10.15).
 RC="$HOME/.zshrc"

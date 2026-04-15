@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# nx platform-guard shim for npx. See shims/pnpm for the rationale.
+#
+# Source of truth: openclawDocker1/shims/npx
+set -euo pipefail
+
+_self_dir="$(cd "$(dirname "$0")" && pwd)"
+
+if [ -z "${NX_GUARD_SKIP:-}" ]; then
+    _root=""
+    _d="$PWD"
+    while [ "$_d" != "/" ] && [ -n "$_d" ]; do
+        if [ -e "$_d/.git" ]; then _root="$_d"; break; fi
+        _d="$(dirname "$_d")"
+    done
+    if [ -n "$_root" ] && [ -x "$_self_dir/ensure-node-modules.sh" ]; then
+        NX_GUARD_SKIP=1 "$_self_dir/ensure-node-modules.sh" "$_root"
+    fi
+fi
+
+PATH=$(printf ':%s:' "$PATH" | sed "s|:$_self_dir:|:|g; s|^:||; s|:$||")
+export PATH
+exec npx "$@"

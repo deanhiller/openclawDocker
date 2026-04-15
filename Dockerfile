@@ -36,6 +36,9 @@ RUN test -n "${MAC_HOME}" || { echo "ERROR: MAC_HOME build arg is required (pass
 # nothing below them is referenced here — so they stay cached until VERSION
 # or CLAUDE_VERSION is intentionally bumped.
 
+# Pre-activate pnpm so corepack doesn't lazy-download it on first use at runtime.
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # OpenClaw (runs as root → /usr/local/bin)
 COPY VERSION /tmp/VERSION
 RUN OPENCLAW_VERSION=$(cat /tmp/VERSION) && \
@@ -63,7 +66,7 @@ RUN usermod -d ${MAC_HOME} node && \
 # Edits here (new aliases, new env vars) are cheap — only re-runs the layers
 # below, not the installs above.
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
-    echo 'export PS1="Docker:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
+    echo 'export PS1="\[\\e[1;33m\]DOCKER\[\\e[0m\]:\\w\\$ "' >> ${MAC_HOME}/.bashrc && \
     echo "alias claude='claude --dangerously-skip-permissions'" >> ${MAC_HOME}/.bashrc && \
     echo 'export HOST_IP="$(getent ahostsv4 host.docker.internal 2>/dev/null | awk '"'"'/STREAM/ {print $1; exit}'"'"')"' >> ${MAC_HOME}/.bashrc && \
     chown node:node ${MAC_HOME}/.bashrc
@@ -74,7 +77,9 @@ RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ${MAC_HOME}/.bashrc && \
 # Append the pnpm/npx wrapper block to the dev user's ~/.bashrc.
 COPY ensure-node-modules.sh /opt/nx-guard/ensure-node-modules.sh
 COPY nx-guard-bashrc.sh /opt/nx-guard/nx-guard-bashrc.sh
-RUN chmod +x /opt/nx-guard/ensure-node-modules.sh && \
+COPY shims/pnpm /opt/nx-guard/pnpm
+COPY shims/npx /opt/nx-guard/npx
+RUN chmod +x /opt/nx-guard/ensure-node-modules.sh /opt/nx-guard/pnpm /opt/nx-guard/npx && \
     echo "" >> ${MAC_HOME}/.bashrc && \
     echo "# >>> nx platform-guard (baked by openclawDocker1 image) >>>" >> ${MAC_HOME}/.bashrc && \
     cat /opt/nx-guard/nx-guard-bashrc.sh >> ${MAC_HOME}/.bashrc && \

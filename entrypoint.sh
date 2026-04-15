@@ -11,19 +11,21 @@ if [ ! -x "$HOME/.local/bin/claude" ]; then
   echo "Claude Code ready: $($HOME/.local/bin/claude --version)"
 fi
 
-# Seed the nx platform-guard helper into the bind-mounted ~/openclaw/bin.
-# Written from the image on every start so Mac + container stay in sync
-# with whatever version the image was built with. The Mac side may also
-# write the same file via baseNxMonorepo/scripts/build.sh — last-write-wins
-# is fine because both sides copy identical canonical bytes.
-if [ -f /opt/nx-guard/ensure-node-modules.sh ]; then
-  mkdir -p "$HOME/openclaw/bin"
-  if ! cmp -s /opt/nx-guard/ensure-node-modules.sh "$HOME/openclaw/bin/ensure-node-modules.sh" 2>/dev/null; then
-    cp /opt/nx-guard/ensure-node-modules.sh "$HOME/openclaw/bin/ensure-node-modules.sh"
-    chmod +x "$HOME/openclaw/bin/ensure-node-modules.sh"
-    echo "Seeded nx-guard helper into $HOME/openclaw/bin/"
+# Seed the nx platform-guard helper + pnpm/npx shims into the bind-mounted
+# ~/openclaw/bin. Written from the image on every start so Mac + container
+# stay in sync with whatever version the image was built with. The Mac side
+# may also write the same files via setup-mac-shell.sh — last-write-wins is
+# fine because both sides copy identical canonical bytes.
+mkdir -p "$HOME/openclaw/bin"
+for src in /opt/nx-guard/ensure-node-modules.sh /opt/nx-guard/pnpm /opt/nx-guard/npx; do
+  [ -f "$src" ] || continue
+  dst="$HOME/openclaw/bin/$(basename "$src")"
+  if ! cmp -s "$src" "$dst" 2>/dev/null; then
+    cp "$src" "$dst"
+    chmod +x "$dst"
+    echo "Seeded $(basename "$src") into $HOME/openclaw/bin/"
   fi
-fi
+done
 
 # Resolve host.docker.internal to its IP every start — Chrome's DevTools rejects
 # Host headers that aren't IPs or "localhost" (DNS rebinding protection), so we
