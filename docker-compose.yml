@@ -8,6 +8,13 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME:-openclaw}-gateway
     restart: unless-stopped
 
+    environment:
+      # 1 = start the openclaw gateway process inside the container (default).
+      # 0 = container comes up but the gateway process is not launched — handy
+      # when you only want to shell in and run claude without paying the
+      # gateway's memory/CPU cost. Controlled by scripts/start.sh prompt.
+      - OPENCLAW_START_GATEWAY=${OPENCLAW_START_GATEWAY:-1}
+
     ports:
       # Mac:18789 → container:18790 (socat) → openclaw 127.0.0.1:18789 (loopback, no pairing)
       - "127.0.0.1:18789:18790"

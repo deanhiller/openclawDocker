@@ -74,7 +74,29 @@ socat TCP-LISTEN:18790,fork,reuseaddr TCP:127.0.0.1:18789 &
 
 # Run openclaw gateway but keep the container alive if it crashes, so you can
 # still shell in and use claude. Retry every 10 seconds.
+#
+# Opt out by setting OPENCLAW_START_GATEWAY=0 (scripts/start.sh prompt controls this).
+# When disabled, the container stays up so you can shell in and run claude
+# without paying the gateway's memory/CPU cost.
+# Sentinel file honored by the loop below. If present, the gateway is not
+# (re)started and the container just stays alive. scripts/gateway-stop.sh
+# creates this file and kills the running gateway; scripts/gateway-start.sh
+# removes it. Kept in /tmp (world-writable) because the container runs as
+# the non-root `node` user. /tmp is cleared on container restart, so state
+# never persists across a compose up/down.
+GATEWAY_DISABLE_FLAG="/tmp/openclaw-gateway-disabled"
+if [ "${OPENCLAW_START_GATEWAY:-1}" = "0" ]; then
+  touch "$GATEWAY_DISABLE_FLAG"
+  echo "OPENCLAW_START_GATEWAY=0 — gateway process will not launch."
+  echo "Container is up; shell in with scripts/shell.sh and run claude normally."
+  echo "Start the gateway later (no container restart): scripts/gateway-start.sh"
+fi
+
 while true; do
+  if [ -e "$GATEWAY_DISABLE_FLAG" ]; then
+    sleep 5
+    continue
+  fi
   echo "Starting openclaw gateway..."
   openclaw gateway || echo "openclaw gateway exited with code $? — retrying in 10s..."
   sleep 10

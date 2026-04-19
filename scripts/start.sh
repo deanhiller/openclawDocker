@@ -18,6 +18,26 @@ export OPENCLAW_WORKSPACE
 echo "Workspace: $OPENCLAW_WORKSPACE"
 echo ""
 
+# The container always starts (so you can shell in and use claude).
+# The opt-out only skips the heavy `openclaw gateway` process inside the
+# container — that's the several-GB memory hog. Claude Code and shells are
+# unaffected. See entrypoint.sh for how OPENCLAW_START_GATEWAY is honored.
+# Skip the prompt if stdin isn't a TTY (e.g. piped/CI) or OPENCLAW_ASSUME_YES=1.
+if [ -t 0 ] && [ "${OPENCLAW_ASSUME_YES:-0}" != "1" ]; then
+  read -r -p "Launch the openclaw gateway process inside the container? [Y/n] " reply
+  case "${reply:-Y}" in
+    [Nn]*)
+      export OPENCLAW_START_GATEWAY=0
+      echo "Gateway process disabled. Container will still start so you can shell in and run claude."
+      ;;
+    *)
+      export OPENCLAW_START_GATEWAY=1
+      ;;
+  esac
+else
+  export OPENCLAW_START_GATEWAY="${OPENCLAW_START_GATEWAY:-1}"
+fi
+
 # Ensure all host-side mount sources exist before Docker tries to mount them.
 # Docker auto-creates missing mount sources as root-owned, which breaks things.
 # ~/.claudeDocker mirrors the container's $HOME — see ~/.claudeDocker/README.md.
