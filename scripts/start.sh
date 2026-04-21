@@ -21,7 +21,8 @@ echo ""
 # The container always starts (so you can shell in and use claude).
 # The opt-out only skips the heavy `openclaw gateway` process inside the
 # container — that's the several-GB memory hog. Claude Code and shells are
-# unaffected. See entrypoint.sh for how OPENCLAW_START_GATEWAY is honored.
+# unaffected. See entrypoint.sh — gateway is single-shot and does not
+# auto-restart on crash; relaunch with scripts/gateway-start.sh.
 # Skip the prompt if stdin isn't a TTY (e.g. piped/CI) or OPENCLAW_ASSUME_YES=1.
 if [ -t 0 ] && [ "${OPENCLAW_ASSUME_YES:-0}" != "1" ]; then
   read -r -p "Launch the openclaw gateway process inside the container? [Y/n] " reply

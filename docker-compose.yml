@@ -9,10 +9,11 @@ services:
     restart: unless-stopped
 
     environment:
-      # 1 = start the openclaw gateway process inside the container (default).
-      # 0 = container comes up but the gateway process is not launched — handy
-      # when you only want to shell in and run claude without paying the
-      # gateway's memory/CPU cost. Controlled by scripts/start.sh prompt.
+      # 1 = launch the openclaw gateway process ONCE at container start (default).
+      # 0 = container comes up but the gateway is not launched — handy when you
+      # only want to shell in and run claude without paying the gateway's
+      # memory/CPU cost. Controlled by scripts/start.sh prompt.
+      # Gateway does NOT auto-restart on crash; relaunch with scripts/gateway-start.sh.
       - OPENCLAW_START_GATEWAY=${OPENCLAW_START_GATEWAY:-1}
 
     ports:

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Relaunch the openclaw gateway process inside an already-running container.
-# Removes the sentinel file the entrypoint loop checks; the loop will pick it
-# up within a few seconds and start `openclaw gateway`. Counterpart:
-# scripts/gateway-stop.sh.
+# Launch the openclaw gateway process inside an already-running container.
+# Output is routed to PID 1's stdout/stderr via /proc/1/fd/{1,2} so it reaches
+# `docker logs` (and scripts/logs.sh). Idempotent: no-op if already running.
+# Counterpart: scripts/gateway-stop.sh.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -16,6 +16,13 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
-echo "Enabling gateway in $CONTAINER (entrypoint loop will start it within ~5s)..."
-docker exec "$CONTAINER" bash -c 'rm -f /tmp/openclaw-gateway-disabled'
-echo "Done. Tail logs: scripts/logs.sh"
+# A duplicate gateway would fail to bind 127.0.0.1:18789 and produce confusing
+# output, so pre-check.
+if docker exec "$CONTAINER" pgrep -f '^openclaw gateway$' >/dev/null 2>&1; then
+  echo "openclaw gateway is already running in $CONTAINER. No action taken."
+  exit 0
+fi
+
+echo "Launching openclaw gateway in $CONTAINER (output -> docker logs)..."
+docker exec -d "$CONTAINER" bash -c 'openclaw gateway > /proc/1/fd/1 2> /proc/1/fd/2'
+echo "Done. Tail output: scripts/logs.sh"
