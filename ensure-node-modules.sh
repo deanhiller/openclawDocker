@@ -10,6 +10,15 @@
 #      this platform and the lockfile hash matches.
 set -euo pipefail
 
+# Strip the shim directory from PATH so pnpm/npx calls from this script
+# find the real binaries, not the shim. Replaces the old NX_GUARD_SKIP env var.
+_strip_shim_from_path() {
+    local shim_dir
+    shim_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PATH=$(printf ':%s:' "$PATH" | sed "s|:${shim_dir}:|:|g; s|^:||; s|:$||")
+    export PATH
+}
+
 detect_platform() {
     local os arch
     os="$(uname -s)"
@@ -48,6 +57,7 @@ ensure_gitignore() {
 
 # Swap node_modules to match $PLATFORM. Requires PLATFORM + NM_DIR + NM_PLATFORM in env.
 swap_node_modules() {
+    _strip_shim_from_path
     ensure_gitignore
 
     if [ -f "$NM_DIR/.platform" ] && [ "$(cat "$NM_DIR/.platform")" = "$PLATFORM" ]; then
@@ -86,6 +96,7 @@ swap_node_modules() {
 
 # Reinstall if pnpm-lock.yaml changed since last install on this platform.
 check_and_install() {
+    _strip_shim_from_path
     local current_hash stored_hash
     current_hash="$(compute_lockfile_hash)"
 
@@ -109,6 +120,7 @@ check_and_install() {
 # Called by the pnpm/npx shell wrappers with the project root as $1.
 guard_project() {
     local root="$1"
+    _strip_shim_from_path
     cd "$root"
 
     [ -f package.json ] || return 0
